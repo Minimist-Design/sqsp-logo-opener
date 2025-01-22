@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const settings = window.loaderSettings;
+  const settings = window.loaderSettings || {};
 
   const loaderWrapper = document.createElement('div');
   loaderWrapper.id = 'custom-loader';
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     align-items: center;
     background: ${settings.backgroundColor || '#000'};
     z-index: 9999;
+    opacity: 1;
     transition: opacity ${settings.fadeOutSpeed || 500}ms ease;
   `;
 
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
   } else if (settings.loaderType === 'text') {
     const text = document.createElement('div');
     text.innerText = settings.customText || 'Loading...';
+    text.className = 'loader-text';
     loaderContent.appendChild(text);
   }
 
@@ -72,5 +74,5 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   loaderWrapper.appendChild(loaderContent);
-  document.body.appendChild(loaderWrapper);
+  document.body.insertBefore(loaderWrapper, document.body.firstChild);
 });
