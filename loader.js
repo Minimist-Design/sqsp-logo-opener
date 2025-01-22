@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // Create the loader wrapper
+  const settings = window.loaderSettings;
+
   const loaderWrapper = document.createElement('div');
   loaderWrapper.id = 'custom-loader';
-
-  // Style the wrapper (users can control via CSS variables)
   loaderWrapper.style.cssText = `
     position: fixed;
     top: 0;
@@ -14,50 +13,64 @@ document.addEventListener('DOMContentLoaded', function () {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: var(--loader-background, #000);
+    background: ${settings.backgroundColor || '#000'};
     z-index: 9999;
-    transition: opacity 500ms ease;
+    transition: opacity ${settings.fadeOutSpeed || 500}ms ease;
   `;
 
-  // Create loader content
   const loaderContent = document.createElement('div');
-  loaderContent.className = 'loader-content';
+  loaderContent.style.cssText = `
+    display: flex;
+    align-items: center;
+    flex-direction: ${settings.loaderStyle === 'bar' ? 'column' : 'row'};
+    gap: 10px;
+    font-family: inherit;
+    color: inherit;
+    font-size: inherit;
+  `;
 
-  // Add logo or text
-  if (window.loaderSettings.loaderType === 'image') {
+  if (settings.loaderType === 'image') {
     const logo = document.createElement('img');
-    logo.src = window.loaderSettings.customLogo || '';
+    logo.src = settings.customLogo || '';
     logo.alt = 'Loading';
     logo.style.cssText = 'max-height: 40px;';
     loaderContent.appendChild(logo);
-  } else if (window.loaderSettings.loaderType === 'text') {
+  } else if (settings.loaderType === 'text') {
     const text = document.createElement('div');
-    text.innerText = window.loaderSettings.customText || 'Loading...';
+    text.innerText = settings.customText || 'Loading...';
     loaderContent.appendChild(text);
   }
 
-  // Add the circle or bar
-  if (window.loaderSettings.loaderStyle === 'circle') {
+  if (settings.loaderStyle === 'circle') {
     const circle = document.createElement('div');
     circle.className = 'circle';
     loaderContent.appendChild(circle);
-  } else if (window.loaderSettings.loaderStyle === 'bar') {
+  } else if (settings.loaderStyle === 'bar') {
     const progressBar = document.createElement('div');
     progressBar.className = 'loading-bar';
     const progress = document.createElement('div');
     progress.className = 'bar-fill';
+    progress.style.width = '0%';
     progressBar.appendChild(progress);
     loaderContent.appendChild(progressBar);
+
+    let progressInterval = setInterval(() => {
+      const currentWidth = parseFloat(progress.style.width) || 0;
+      if (currentWidth < 95) {
+        progress.style.width = `${currentWidth + 5}%`;
+      }
+    }, 200);
+
+    window.addEventListener('load', () => {
+      clearInterval(progressInterval);
+      progress.style.width = '100%';
+      setTimeout(() => {
+        loaderWrapper.style.opacity = '0';
+        setTimeout(() => loaderWrapper.remove(), settings.fadeOutSpeed || 500);
+      }, settings.fadeOutSpeed || 500);
+    });
   }
 
   loaderWrapper.appendChild(loaderContent);
   document.body.appendChild(loaderWrapper);
-
-  // Fade out on page load
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      loaderWrapper.style.opacity = '0';
-      setTimeout(() => loaderWrapper.remove(), 500);
-    }, 500);
-  });
 });
