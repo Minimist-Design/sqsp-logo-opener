@@ -1,59 +1,47 @@
+/**
+ * loader.js
+ * 
+ * Displays a custom loader overlay. Removes itself after window.load,
+ * or forcibly after a fallback timer to avoid a permanent black screen
+ * on certain Squarespace templates.
+ */
 
-(function () {
-
+(function() {
+  // Identify the <script> tag that loaded this file
   var scriptEl = document.currentScript;
 
-
-  function getDataAttr(attrName, defaultVal) {
-    var val = scriptEl.getAttribute(attrName);
+  // Helper: read data-* attr or return default
+  function getAttr(name, defaultVal) {
+    var val = scriptEl.getAttribute(name);
     return (val !== null) ? val : defaultVal;
   }
 
-
-  function toBool(val) {
-    if (!val) return false;
-    return (val.toString().toLowerCase() === 'true');
-  }
-
-
+  // Config from data attributes
   var cfg = {
-    loaderType:         getDataAttr('data-loader-type', 'image'), // 'image' or 'text'
-    loaderImage:        getDataAttr('data-loader-image', ''), 
-    loaderText:         getDataAttr('data-loader-text', 'Loading...'),
-    loaderStyle:        getDataAttr('data-loader-style', 'circle'), // 'circle' or 'bar'
-    removeLoadingLine:  toBool(getDataAttr('data-remove-loading-line', 'false')),
-    fadeTime:           parseInt(getDataAttr('data-fade-time', '500'), 10),
-    additionalDelay:    parseInt(getDataAttr('data-additional-delay', '0'), 10),
-    showOnce:           toBool(getDataAttr('data-show-once', 'false')),
-
-    backgroundColor:    getDataAttr('data-bg-color', '#000000'),
-    circleColor:        getDataAttr('data-circle-color', '#ffffff'),
-    circleSize:         getDataAttr('data-circle-size', '40px'),
-    barColor:           getDataAttr('data-bar-color', '#ffffff'),
-    barBackground:      getDataAttr('data-bar-background', '#333333'),
-    barWidth:           getDataAttr('data-bar-width', '70%'),
-    barHeight:          getDataAttr('data-bar-height', '5px'),
-    textColor:          getDataAttr('data-text-color', '#ffffff'),
-    textSize:           getDataAttr('data-text-size', '16px'),
-    fontFamily:         getDataAttr('data-font-family', 'inherit')
+    loaderType:      getAttr('data-loader-type', 'image'),     // "image" or "text"
+    customText:      getAttr('data-custom-text', 'Loading...'),// used if loaderType="text"
+    customImage:     getAttr('data-custom-image', ''),         // used if loaderType="image"
+    loaderStyle:     getAttr('data-loader-style', 'circle'),   // "circle" or "bar"
+    fadeTime:        parseInt(getAttr('data-fade-time', '500'), 10),
+    fallbackTime:    parseInt(getAttr('data-fallback-time', '10000'), 10), // force removal
+    bgColor:         getAttr('data-bg-color', '#000000'),
+    circleColor:     getAttr('data-circle-color', '#ffffff'),
+    circleSize:      getAttr('data-circle-size', '40px'),
+    barColor:        getAttr('data-bar-color', '#ffffff'),
+    barBackground:   getAttr('data-bar-background', '#333333'),
+    barWidth:        getAttr('data-bar-width', '70%'),
+    barHeight:       getAttr('data-bar-height', '5px'),
+    fontFamily:      getAttr('data-font-family', 'inherit'),
+    textColor:       getAttr('data-text-color', '#ffffff'),
+    textSize:        getAttr('data-text-size', '16px')
   };
 
-
-  if (cfg.showOnce && localStorage.getItem('sqspCustomLoaderShown') === 'yes') {
-    return; 
-  } else {
-
-    if (cfg.showOnce) {
-      localStorage.setItem('sqspCustomLoaderShown', 'yes');
-    }
-  }
-
-
+  // 1) Create a <style> for the spinning circle keyframe (if used)
   var styleEl = document.createElement('style');
   styleEl.textContent = '@keyframes sqspLoaderSpin { to { transform: rotate(360deg); } }';
   document.head.appendChild(styleEl);
 
-  // Create preloader wrapper
+  // 2) Create the loader overlay
   var loaderWrapper = document.createElement('div');
   loaderWrapper.id = 'sqsp-custom-loader';
   loaderWrapper.style.cssText = [
@@ -66,11 +54,12 @@
     'flex-direction: column',
     'justify-content: center',
     'align-items: center',
-    'background: ' + cfg.backgroundColor,
-    'z-index: 999999', 
+    'background: ' + cfg.bgColor,
+    'z-index: 999999',
     'transition: opacity ' + cfg.fadeTime + 'ms ease'
   ].join(';');
 
+  // Insert into the DOM immediately (or as soon as possible)
   function appendLoader() {
     if (!document.body.contains(loaderWrapper)) {
       document.body.appendChild(loaderWrapper);
@@ -82,7 +71,7 @@
     document.addEventListener('DOMContentLoaded', appendLoader);
   }
 
-
+  // 3) Create inner content container
   var loaderContent = document.createElement('div');
   loaderContent.style.cssText = [
     'display: flex',
@@ -95,20 +84,21 @@
   ].join(';');
   loaderWrapper.appendChild(loaderContent);
 
- 
+  // 4) Add image or text loader
   if (cfg.loaderType === 'image') {
     var imgEl = document.createElement('img');
-    imgEl.src = cfg.loaderImage;
+    imgEl.src = cfg.customImage;
     imgEl.alt = 'Loading';
     imgEl.style.cssText = 'max-height: 40px;';
     loaderContent.appendChild(imgEl);
   } else {
+    // text loader
     var textEl = document.createElement('div');
-    textEl.textContent = cfg.loaderText;
+    textEl.textContent = cfg.customText;
     loaderContent.appendChild(textEl);
   }
 
-
+  // 5) Add circle or bar
   if (cfg.loaderStyle === 'circle') {
     var circleEl = document.createElement('div');
     circleEl.style.cssText = [
@@ -121,9 +111,9 @@
     ].join(';');
     loaderContent.appendChild(circleEl);
   } else {
-  
-    var barWrapper = document.createElement('div');
-    barWrapper.style.cssText = [
+    // bar
+    var progressBar = document.createElement('div');
+    progressBar.style.cssText = [
       'width: ' + cfg.barWidth,
       'height: ' + cfg.barHeight,
       'background: ' + cfg.barBackground,
@@ -131,11 +121,6 @@
       'overflow: hidden',
       'border-radius: 5px'
     ].join(';');
-
-
-    if (cfg.removeLoadingLine) {
-      barWrapper.style.display = 'none';
-    }
 
     var barFill = document.createElement('div');
     barFill.style.cssText = [
@@ -145,33 +130,47 @@
       'transition: width 0.3s ease'
     ].join(';');
 
-    barWrapper.appendChild(barFill);
-    loaderContent.appendChild(barWrapper);
+    progressBar.appendChild(barFill);
+    loaderContent.appendChild(progressBar);
 
-  
+    // Simulate progress
     var currentWidth = 0;
-    var intervalID = setInterval(function () {
+    var intervalID = setInterval(function() {
       if (currentWidth < 95) {
         currentWidth += 5;
         barFill.style.width = currentWidth + '%';
       }
     }, 200);
 
-    window.addEventListener('load', function () {
+    // When the page actually loads, fill to 100%
+    window.addEventListener('load', function() {
       clearInterval(intervalID);
       barFill.style.width = '100%';
     });
   }
 
+  // 6) Fade out after window.load, or forcibly after fallback time
+  var removeLoader = function() {
+    loaderWrapper.style.opacity = '0';
+    setTimeout(function() {
+      if (loaderWrapper.parentNode) {
+        loaderWrapper.parentNode.removeChild(loaderWrapper);
+      }
+    }, cfg.fadeTime);
+  };
 
-  window.addEventListener('load', function () {
-    setTimeout(function () {
-      loaderWrapper.style.opacity = '0';
-      setTimeout(function () {
-        if (loaderWrapper.parentNode) {
-          loaderWrapper.parentNode.removeChild(loaderWrapper);
-        }
-      }, cfg.fadeTime);
-    }, cfg.additionalDelay);
+  // a) On window load
+  window.addEventListener('load', function() {
+    setTimeout(removeLoader, cfg.fallbackTime < 50 ? 0 : cfg.additionalDelay || 0);
+    // Above line references "cfg.additionalDelay" but we haven't used it in data-attrs.
+    // If you want an extra delay after load, add data-additional-delay to the script.
   });
+
+  // b) Fallback timer: forcibly remove if load doesn't fire
+  setTimeout(function() {
+    // If it's still on screen after fallbackTime, remove it
+    if (document.body.contains(loaderWrapper)) {
+      removeLoader();
+    }
+  }, cfg.fallbackTime || 10000);
 })();
