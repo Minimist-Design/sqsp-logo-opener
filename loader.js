@@ -1,148 +1,189 @@
-
+document.addEventListener('DOMContentLoaded', function () {
+  const settings = window.loaderSettings || {};
 (function () {
 
-  var scriptEl = document.currentScript;
-
-  function getAttr(name, defaultVal) {
-    return scriptEl.getAttribute(name) || defaultVal;
-  }
-
-  var s = {
-    loaderType:       getAttr('data-loader-type',   'text'),  // 'text' or 'image'
-    customText:       getAttr('data-custom-text',   'Loading...'),
-    customLogo:       getAttr('data-custom-logo',   ''), 
-    loaderStyle:      getAttr('data-loader-style',  'circle'), // 'circle' or 'bar'
-    fadeOutSpeed:     parseInt(getAttr('data-fade-out-speed', '500'), 10),
-    circleColor:      getAttr('data-circle-color',  '#ffffff'),
-    circleSize:       getAttr('data-circle-size',   '40px'),
-    barColor:         getAttr('data-bar-color',     '#ffffff'),
-    barBackground:    getAttr('data-bar-background','#333333'),
-    barWidth:         getAttr('data-bar-width',     '70%'),
-    barHeight:        getAttr('data-bar-height',    '5px'),
-    fontFamily:       getAttr('data-font-family',   'inherit'),
-    textColor:        getAttr('data-text-color',    '#ffffff'),
-    textSize:         getAttr('data-text-size',     '16px'),
-    backgroundColor:  getAttr('data-background-color','#000000')
-  };
-
-
-  var styleEl = document.createElement('style');
-  styleEl.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+  const loaderWrapper = document.createElement('div');
+  loaderWrapper.id = 'custom-loader';
+  loaderWrapper.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: ${settings.backgroundColor || '#000'};
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity ${settings.fadeOutSpeed || 500}ms ease;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  `;
   document.head.appendChild(styleEl);
 
+  const loaderContent = document.createElement('div');
+  loaderContent.style.cssText = `
+    display: flex;
+    align-items: center;
+    flex-direction: ${settings.loaderStyle === 'bar' ? 'column' : 'row'};
+    gap: 10px;
+    font-family: inherit;
+    color: inherit;
+    font-size: inherit;
+  `;
 
-  var loaderWrapper = document.createElement('div');
-  loaderWrapper.id = 'custom-loader';
-  loaderWrapper.style.cssText = [
-    'position: fixed',
-    'top: 0',
-    'left: 0',
-    'width: 100%',
-    'height: 100%',
-    'display: flex',
-    'flex-direction: column',
-    'justify-content: center',
-    'align-items: center',
-    'background: ' + s.backgroundColor,
-    'z-index: 9999',
-    'transition: opacity ' + s.fadeOutSpeed + 'ms ease'
-  ].join(';');
-
-  // Append to body as soon as we can
-  if (document.body) {
-    document.body.appendChild(loaderWrapper);
-  } else {
-    document.addEventListener('DOMContentLoaded', function() {
-      document.body.appendChild(loaderWrapper);
-    });
-  }
-
-  // Create loader content container
-  var loaderContent = document.createElement('div');
-  loaderContent.style.cssText = [
-    'display: flex',
-    'align-items: center',
-    (s.loaderStyle === 'bar') ? 'flex-direction: column' : 'flex-direction: row',
-    'gap: 10px',
-    'font-family: ' + s.fontFamily,
-    'color: ' + s.textColor,
-    'font-size: ' + s.textSize
-  ].join(';');
-  loaderWrapper.appendChild(loaderContent);
-
-  // Add image or text
-  if (s.loaderType === 'image') {
-    var logo = document.createElement('img');
-    logo.src = s.customLogo;
+  if (settings.loaderType === 'image') {
+    const logo = document.createElement('img');
+    logo.src = settings.customLogo || '';
     logo.alt = 'Loading';
     logo.style.cssText = 'max-height: 40px;';
     loaderContent.appendChild(logo);
-  } else {
-    // default if 'text' or anything else
-    var textEl = document.createElement('div');
-    textEl.innerText = s.customText;
-    loaderContent.appendChild(textEl);
+  } else if (settings.loaderType === 'text') {
+    const text = document.createElement('div');
+    text.innerText = settings.customText || 'Loading...';
+    text.className = 'loader-text';
+    loaderContent.appendChild(text);
   }
+  document.addEventListener('DOMContentLoaded', function () {
+   
+    const s = window.loaderSettings;
+    if (!s) {
+      console.warn('No loaderSettings found. Loader will not run.');
+      return;
+    }
+    const loaderWrapper = document.createElement('div');
+    loaderWrapper.id = 'custom-loader';
+    loaderWrapper.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: ${s.backgroundColor};
+      z-index: 9999;
+      transition: opacity ${s.fadeOutSpeed}ms ease;
+    `;
+    const loaderContent = document.createElement('div');
+    loaderContent.style.cssText = `
+      display: flex;
+      align-items: center;
+      flex-direction: ${s.loaderStyle === 'bar' ? 'column' : 'row'};
+      gap: 10px;
+      font-family: ${s.fontFamily};
+      color: ${s.textColor};
+      font-size: ${s.textSize};
+    `;
+    if (s.loaderType === 'image') {
+      const logo = document.createElement('img');
+      logo.src = s.customLogo;
+      logo.alt = 'Loading';
+      logo.style.cssText = 'max-height: 40px;';
+      loaderContent.appendChild(logo);
+    } else if (s.loaderType === 'text') {
+      const text = document.createElement('div');
+      text.innerText = s.customText;
+      loaderContent.appendChild(text);
+    }
+    if (s.loaderStyle === 'circle') {
+      const circle = document.createElement('div');
+      circle.style.cssText = `
+        width: ${s.circleSize};
+        height: ${s.circleSize};
+        border: 3px solid ${s.circleColor};
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+      `;
+      loaderContent.appendChild(circle);
+    
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          loaderWrapper.style.opacity = '0';
+          setTimeout(() => loaderWrapper.remove(), s.fadeOutSpeed);
+        }, s.fadeOutSpeed);
+      });
+    } else if (s.loaderStyle === 'bar') {
+    
+      const progressBar = document.createElement('div');
+      progressBar.style.cssText = `
+        width: ${s.barWidth};
+        height: ${s.barHeight};
+        background: ${s.barBackground};
+        position: relative;
+        overflow: hidden;
+        border-radius: 5px;
+      `;
 
-  // Circle or bar
-  if (s.loaderStyle === 'circle') {
-    var circle = document.createElement('div');
-    circle.style.cssText = [
-      'width: ' + s.circleSize,
-      'height: ' + s.circleSize,
-      'border: 3px solid ' + s.circleColor,
-      'border-radius: 50%',
-      'border-top-color: transparent',
-      'animation: spin 1s linear infinite'
-    ].join(';');
+  if (settings.loaderStyle === 'circle') {
+    const circle = document.createElement('div');
+    circle.className = 'circle';
     loaderContent.appendChild(circle);
-
-  } else {
-    // "bar"
-    var progressBar = document.createElement('div');
-    progressBar.style.cssText = [
-      'width: ' + s.barWidth,
-      'height: ' + s.barHeight,
-      'background: ' + s.barBackground,
-      'position: relative',
-      'overflow: hidden',
-      'border-radius: 5px'
-    ].join(';');
-
-    var progress = document.createElement('div');
-    progress.style.cssText = [
-      'width: 0%',
-      'height: 100%',
-      'background: ' + s.barColor,
-      'transition: width 0.3s ease'
-    ].join(';');
-
+  } else if (settings.loaderStyle === 'bar') {
+    const progressBar = document.createElement('div');
+    progressBar.className = 'loading-bar';
+    const progress = document.createElement('div');
+    progress.className = 'bar-fill';
+    progress.style.width = '0%';
     progressBar.appendChild(progress);
     loaderContent.appendChild(progressBar);
+    
+      const progress = document.createElement('div');
+      progress.style.cssText = `
+        width: 0%;
+        height: 100%;
+        background: ${s.barColor};
+        transition: width 0.3s ease;
+      `;
+      progressBar.appendChild(progress);
+      loaderContent.appendChild(progressBar);
 
-    var currentWidth = 0;
-    var intervalID = setInterval(function() {
+    let progressInterval = setInterval(() => {
+      const currentWidth = parseFloat(progress.style.width) || 0;
       if (currentWidth < 95) {
-        currentWidth += 5;
-        progress.style.width = currentWidth + '%';
+        progress.style.width = `${currentWidth + 5}%`;
       }
     }, 200);
+     
+      let progressInterval = setInterval(() => {
+        const currentWidth = parseFloat(progress.style.width) || 0;
+        if (currentWidth < 95) {
+          progress.style.width = (currentWidth + 5) + '%';
+        }
+      }, 200);
 
-    window.addEventListener('load', function() {
-      clearInterval(intervalID);
+    window.addEventListener('load', () => {
+      clearInterval(progressInterval);
       progress.style.width = '100%';
+      setTimeout(() => {
+        loaderWrapper.style.opacity = '0';
+        setTimeout(() => loaderWrapper.remove(), settings.fadeOutSpeed || 500);
+      }, settings.fadeOutSpeed || 500);
     });
   }
+     
+      window.addEventListener('load', () => {
+        clearInterval(progressInterval);
+        progress.style.width = '100%';
+        setTimeout(() => {
+          loaderWrapper.style.opacity = '0';
+          setTimeout(() => loaderWrapper.remove(), s.fadeOutSpeed);
+        }, s.fadeOutSpeed);
+      });
+    }
 
-  // Fade out once the page fully loads
-  window.addEventListener('load', function() {
-    setTimeout(function() {
-      loaderWrapper.style.opacity = '0';
-      setTimeout(function() {
-        if (loaderWrapper.parentNode) {
-          loaderWrapper.parentNode.removeChild(loaderWrapper);
-        }
-      }, s.fadeOutSpeed);
-    }, s.fadeOutSpeed);
+  loaderWrapper.appendChild(loaderContent);
+  document.body.insertBefore(loaderWrapper, document.body.firstChild);
+});
+    loaderWrapper.appendChild(loaderContent);
+    document.body.appendChild(loaderWrapper);
   });
 })();
