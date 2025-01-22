@@ -1,3 +1,5 @@
+
+
 (function () {
 
   const styleEl = document.createElement('style');
@@ -8,16 +10,15 @@
   `;
   document.head.appendChild(styleEl);
 
-
   document.addEventListener('DOMContentLoaded', function () {
-   
+    // Get settings from global variable
     const s = window.loaderSettings;
     if (!s) {
       console.warn('No loaderSettings found. Loader will not run.');
       return;
     }
 
-
+ 
     const loaderWrapper = document.createElement('div');
     loaderWrapper.id = 'custom-loader';
     loaderWrapper.style.cssText = `
@@ -35,7 +36,7 @@
       transition: opacity ${s.fadeOutSpeed}ms ease;
     `;
 
-
+  
     const loaderContent = document.createElement('div');
     loaderContent.style.cssText = `
       display: flex;
@@ -46,6 +47,7 @@
       color: ${s.textColor};
       font-size: ${s.textSize};
     `;
+
 
     if (s.loaderType === 'image') {
       const logo = document.createElement('img');
@@ -59,7 +61,9 @@
       loaderContent.appendChild(text);
     }
 
+
     if (s.loaderStyle === 'circle') {
+      // Circle
       const circle = document.createElement('div');
       circle.style.cssText = `
         width: ${s.circleSize};
@@ -71,16 +75,19 @@
       `;
       loaderContent.appendChild(circle);
 
-    
       window.addEventListener('load', () => {
         setTimeout(() => {
           loaderWrapper.style.opacity = '0';
-          setTimeout(() => loaderWrapper.remove(), s.fadeOutSpeed);
+          setTimeout(() => {
+            loaderWrapper.remove();
+            // Reveal the page after loader is removed
+            document.body.style.visibility = 'visible';
+          }, s.fadeOutSpeed);
         }, s.fadeOutSpeed);
       });
 
     } else if (s.loaderStyle === 'bar') {
-    
+      // Progress bar container
       const progressBar = document.createElement('div');
       progressBar.style.cssText = `
         width: ${s.barWidth};
@@ -90,8 +97,7 @@
         overflow: hidden;
         border-radius: 5px;
       `;
-
-    
+      // Progress fill
       const progress = document.createElement('div');
       progress.style.cssText = `
         width: 0%;
@@ -102,7 +108,6 @@
       progressBar.appendChild(progress);
       loaderContent.appendChild(progressBar);
 
-     
       let progressInterval = setInterval(() => {
         const currentWidth = parseFloat(progress.style.width) || 0;
         if (currentWidth < 95) {
@@ -110,13 +115,16 @@
         }
       }, 200);
 
-     
       window.addEventListener('load', () => {
         clearInterval(progressInterval);
         progress.style.width = '100%';
         setTimeout(() => {
           loaderWrapper.style.opacity = '0';
-          setTimeout(() => loaderWrapper.remove(), s.fadeOutSpeed);
+          setTimeout(() => {
+            loaderWrapper.remove();
+            // Reveal the page
+            document.body.style.visibility = 'visible';
+          }, s.fadeOutSpeed);
         }, s.fadeOutSpeed);
       });
     }
